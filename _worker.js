@@ -7,7 +7,7 @@ import { connect } from 'cloudflare:sockets';
 
 // How to generate your own UUID:
 // https://www.uuidgenerator.net/
-let userID = '89b3cbba-ebbc-485a-9481-976a0415eab9';
+let userID = '89b3cbba-e4ac-425a-9451-976a0415eab9';
 
 // https://www.nslookup.io/domains/bpb.yousef.isegaro.com/dns-records/
 const proxyIPs= ['bpb.yousef.isegaro.com'];
@@ -815,10 +815,23 @@ const getNormalConfigs = async (env, hostName, client) => {
 
     ports.forEach(port => {
         Addresses.forEach((addr, index) => {
-          const vlessConfig = `vless://${userID}@${addr}:${port}?encryption=none&type=ws&host=${randomUpperCase(hostName)}&security=none&path=${`/${getRandomPath(16)}${proxyIP ? `/${encodeURIComponent(btoa(proxyIP))}` : ''}`}&ed=2560#${encodeURIComponent(generateRemark(index, port))}`;
-          vlessWsTls += vlessConfig + '\n';
+
+            vlessWsTls += 'vless' + `://${userID}@${addr}:${port}?encryption=none&type=ws&host=${
+                randomUpperCase(hostName)}${
+                defaultHttpsPorts.includes(port) 
+                    ? `&security=tls&sni=${
+                        randomUpperCase(hostName)
+                    }&fp=randomized&alpn=${
+                        client === 'singbox' ? 'http/1.1' : 'h2,http/1.1'
+                    }`
+                    : ''}&path=${`/${getRandomPath(16)}${proxyIP ? `/${encodeURIComponent(btoa(proxyIP))}` : ''}`}${
+                        client === 'singbox' 
+                            ? '&eh=Sec-WebSocket-Protocol&ed=2560' 
+                            : encodeURIComponent('?ed=2560')
+                    }#${encodeURIComponent(generateRemark(index, port))}\n`;
         });
-      });
+    });
+
     return btoa(vlessWsTls);
 }
 
